@@ -1,0 +1,16 @@
+# local files
+config.local
+
+# virtual environment
+env/
+
+# notebooks
+notebooks/
+
+# accessory files
+src/*.pyc
+.ipynb_checkpoints/
+
+# files to be removed
+src/orbit_bins_test.py
+
