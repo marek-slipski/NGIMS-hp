@@ -6,19 +6,20 @@ import matplotlib.pyplot as plt
 
 import find_ngi_files as fnf
 import read_raw as rr
-import density_fncs as dnf
+
+
 
 def hp_parse(parser):
     hp_parser = parser.add_argument_group('Homopause calculation parameters')
     hp_parser.add_argument('--ratio',default=1.25,
                           help='N2/Ar ratio in the lower atmosphere')
-    hp_parser.add_argument('--hp_alt',action='store_true',default=True,
+    hp_parser.add_argument('--hp_alt',action='store_true',default=False,
                           help='Calculate homopause altitude')
     hp_parser.add_argument('--hp_den',action='store_true',default=False,
                           help='Calculate homopause level in CO2 density space')
     hp_parser.add_argument('--hp_maxalt',action='store',default=190.,
                           help='Maximum altitude for fit')
-    hp_parser.add_argument('--hp_maxden',action='store',default=1.e+2,
+    hp_parser.add_argument('--hp_maxden',action='store',default=1.e+8,
                           help='Minimum CO2 density for fit')
     
 def hp_N2Ar_ratio(N2,Ar,alt,ratio=1.25):
@@ -58,7 +59,7 @@ def main(data,parameters):
         hp_dict['alt'] = alt_hp_fit
         
     if parameters.hp_den:
-        den_data = data[data['abundance_CO2']>hp.maxCO2]
+        den_data = data[data['abundance_CO2']>parameters.hp_maxden]
         den_hp_fit = CO2_hp(den_data)
         hp_dict['den'] = den_hp_fit
         
