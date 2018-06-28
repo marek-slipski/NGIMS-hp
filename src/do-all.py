@@ -9,6 +9,7 @@ import json
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 import find_ngi_files as fnf
 import read_raw as rr
@@ -54,10 +55,10 @@ data_parser.add_argument('--IO',action='store',default='I',
                         help='[I]nbound or [O]outbound')
 
 pp.plot_parse(parser)
-plot_parse.add_argument('--hpfit',action='store',default=False,
-                       help='Make additional mixing ratio plot with HP fit.')
 
 hp.hp_parse(parser)
+parser.add_argument('--hpfit',action='store_true',default=False,
+                       help='Make additional mixing ratio plot with HP fit.')
 
 #hpcalc_parser = subparsers.add_parser('hpcalc',help='Calculate Homopause')
 
@@ -70,7 +71,7 @@ if args.savedir:
     if not os.path.exists(savedir):
         os.makedirs(savedir)
     with open(savedir+'/result.json', 'w') as saveparams:
-        json.dump(vars(args), saveparams)
+        json.dump(vars(args), saveparams,indent=4)
     if 'plot' in args.tasks:
         if args.den_plot:
             den_fig_dir = savedir+'/figs/density_profiles/'
@@ -80,6 +81,10 @@ if args.savedir:
             mr_fig_dir = savedir+'/figs/ratio_profiles/'
             if not os.path.exists(mr_fig_dir):
                 os.makedirs(mr_fig_dir)
+        if args.hpfit:
+            fit_fig_dir = savedir+'/figs/ratio_profiles_fit/'
+            if not os.path.exists(fit_fig_dir):
+                os.makedirs(fit_fig_dir)
     pieces = {}
     if args.hp_alt:
         pieces['alt'] = []
@@ -91,13 +96,16 @@ if args.orbits:
     if len(args.orbits) == 2:
         orbend = args.orbits[-1]
     else:
-        orbend = orbstart + 1
-orbs = np.arange(orbstart,orbend)
+        orbend = orbstart
+orbs = np.arange(orbstart,orbend+1)
 
 for orb in orbs:
     binstart = orb - args.binorbits/2.
     binend = orb + args.binorbits/2.
     binfiles = fnf.files_from_orbrange(binstart,binend,args.source,args.version,args.revision)
+    
+    if len(binfiles) == 0:
+        continue
         
         
     # BELOW SHOULD BE READ_RAW.MAIN()
@@ -105,7 +113,7 @@ for orb in orbs:
     bin_df_re = rr.realign(bin_df) # convert sp and abun columns to species-specific abunds
     bin_df_re.sort_values('alt',ascending=False,inplace=True) # order by dec altitude
     
-    if 'plot' in args.tasks:
+    if 'plot' in args.tasks and args.savedir:
         if args.den_plot:
             args.den_save = den_fig_dir+str(orb).zfill(5)
         if args.mr_plot:
@@ -122,7 +130,18 @@ for orb in orbs:
                 hp_to_dict['orbit'] = orb
                 hp_to_dict['count'] = len(binfiles)
                 pieces[key].append(hp_to_dict)
+                
+    if args.hpfit:
+        fit_alts = np.linspace(bin_df_re['alt'].min(),args.hp_maxalt,100)
+        ext_alts = np.linspace(hp_res['alt'][0],250,100)
+        fit_vals = np.exp(hp_res['alt'][1][0]*fit_alts + hp_res['alt'][1][1])
+        ext_vals = np.exp(hp_res['alt'][1][0]*ext_alts + hp_res['alt'][1][1])
+        plot_res['mr'].plot(fit_vals,fit_alts,'k')
+        plot_res['mr'].plot(ext_vals,ext_alts,'k--')
+        if args.savedir:
+            plt.savefig(fit_fig_dir+str(orb).zfill(5))
         
+    plt.close("all")
             
 if args.savedir:
     if args.hp_alt and not args.hp_den:
@@ -132,7 +151,7 @@ if args.savedir:
     elif args.hp_alt and args.hp_den:
         alt_df = pd.DataFrame(pieces['alt'])
         den_df = pd.DataFrame(pieces['den'])
-        merged = pd.merge(alt_df,den_df,on='orbit',suffixes=('alt','den'))
+        merged = pd.merge(alt_df,den_df,on=['orbit','count'],suffixes=('_alt','_den'))
         merged.to_csv(savedir+'/homopause.csv',index=False)
     
     

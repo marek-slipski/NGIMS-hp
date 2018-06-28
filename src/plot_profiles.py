@@ -67,6 +67,7 @@ def main(data,plotinfo):
         plot_dict['den'] = density_plot(data,savefile=plotinfo.den_save,yaxis=plotinfo.yaxis)
     if plotinfo.mr_plot:
         plot_dict['mr'] = mixing_plot(data,savefile=plotinfo.mr_save,yaxis=plotinfo.yaxis)
+    return plot_dict
         
         
 if __name__=='__main__':
