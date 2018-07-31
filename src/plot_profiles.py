@@ -89,4 +89,4 @@ if __name__=='__main__':
     
     
     main(bin_df_re,args)
-    
+    plt.show()
