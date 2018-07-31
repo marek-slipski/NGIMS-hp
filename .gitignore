@@ -3,6 +3,7 @@ config.local
 
 # virtual environment
 env/
+env32/
 
 # notebooks
 notebooks/
