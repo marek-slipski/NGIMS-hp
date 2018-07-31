@@ -9,6 +9,9 @@ env32/
 # notebooks
 notebooks/
 
+# files that need to be fixed first
+playground/
+
 # accessory files
 src/*.pyc
 .ipynb_checkpoints/
