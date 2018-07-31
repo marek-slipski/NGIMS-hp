@@ -22,7 +22,6 @@ tempbase = config['data_path']
 pathbase = 'maven/data/sci/ngi/l2/'
 base = os.path.expanduser(tempbase+pathbase)
 
-
 ## Not specifying some other things
 time = 'T[0-9][0-9][0-9][0-9][0-9][0-9]'
 
@@ -123,7 +122,8 @@ def get_orbrange(start,stop):
     '''
     List of orbits to loop through to find matching files
     '''
-    orbrange = np.arange(start,stop+1) #to loop through
+    orbs = np.arange(int(start),int(stop)+1,1)
+    orbrange = orbs[np.where((orbs>=start)&(orbs<=stop))] #to loop through
     return orbrange
 
 def get_daterange(start,stop):
@@ -224,9 +224,8 @@ def files_from_daterange(start,stop,source,vers,rev):
     return filelist
 #########################################################
 
-if __name__=='__main__':
-    #### PARSER ###########################################################
-    parser = argparse.ArgumentParser(description='NGIMS L2 search options')
+def parser_main(made_parser):
+    parser = made_parser.add_argument_group(description='NGIMS L2 search options')
     parser.add_argument('-s',type=int,action='store',dest='single',
                         help='Single value to look for')
     parser.add_argument('-r',type=int,nargs=2,action='store',dest='range',
@@ -245,12 +244,17 @@ if __name__=='__main__':
     parser.add_argument('--source',choices=['neutrals','csn','cso','ion'],
                         default='neutrals',
                         help='Which NGIMS source to use. neutrals includes csn and cso')
-    parser.add_argument('--vr',action='store',dest='vers_rev',default='0701',
+    parser.add_argument('--vr',action='store',dest='vers_rev',
+                        default=str(config['version']).zfill(2)+str(config['revision']).zfill(2),
                         help='Version and revision: vvrr')
 
     parser.add_argument('-f','--file',action='store',dest='output',type=str,nargs='?',
                         help='Output file to save to')
 
+    
+def main():
+    parser = argparse.ArgumentParser()
+    parser_main(parser)
     args = parser.parse_args()
     #######################################################################
     vers = args.vers_rev[0:2]
@@ -260,7 +264,7 @@ if __name__=='__main__':
         open('src/ngims_tid_orbit.dat','rb')
     except:
         make_orb_tid(args.source,vers,rev,'src/ngims_tid_orbit.dat')
-    
+
     if args.orbtid:
         make_orb_tid(args.source,vers,rev,args.orbtid)
 
@@ -276,9 +280,8 @@ if __name__=='__main__':
     elif args.date:
         #dates = get_daterange(start,stop)
         file_list = files_from_daterange(start,stop,args.source,vers,rev)
-    else: # No target specified
+    #else: # No target specified
         #file_list = all_files()
-        sys.exit()
 
     for fl in file_list:
         print fl
@@ -289,3 +292,6 @@ if __name__=='__main__':
         with open(args.output,'wb') as of:
             for item in file_list:
                 of.write("%s\n" % item)
+    
+if __name__=='__main__':
+    main()

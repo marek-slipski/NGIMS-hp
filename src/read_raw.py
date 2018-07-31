@@ -14,7 +14,8 @@ import sys
 # 20170705
 ################################################################################
 def input_parse(parser):
-    ingroup = parser.add_mutually_exclusive_group()
+    in_parser = parser.add_argument_group('Are files coming from pipe or files?')
+    ingroup = in_parser.add_mutually_exclusive_group()
     ingroup.add_argument('-p','--pipe',action='store_true',dest='pipe',
                          help='Pipe in list of files (e.g. from find_ngi_files)')
     ingroup.add_argument('-f','--infile',action='store',dest='infile',type=file,
