@@ -42,13 +42,13 @@ def density_plot(data,species=['N2','Ar','CO2'],savefile=None,yaxis='alt'):
         plt.savefig(savefile,dpi=300)
     return axd
 
-def mixing_plot(data,mrs=['N2/Ar','CO2/N2','CO2/Ar'],savefile=None,yaxis='alt'):
-    colors  = {'N2/Ar':'purple','CO2/N2':'teal','CO2/Ar':'goldenrod'}
+def mixing_plot(data,mrs=['N2/Ar','N2/CO2','Ar/CO2'],savefile=None,yaxis='alt'):
+    colors  = {'N2/Ar':'purple','N2/CO2':'teal','Ar/CO2':'goldenrod'}
     figr, axr = plt.subplots()
     for mr in mrs:
         sps = mr.split('/')
         axr.scatter(data['abundance_'+sps[0]]/data['abundance_'+sps[1]],
-                   data[ycol[yaxis]],s=2,color=colors[mr],linewidth=1,alpha=0.3,
+                   data[ycol[yaxis]],s=2,color=colors[mr],linewidth=1,
                    label=mr)
     axr.set_xscale('log')
     axr.set_xlabel(r'Mixing ratio')

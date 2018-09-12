@@ -64,8 +64,6 @@ def main(data,parameters):
         hp_dict['den'] = den_hp_fit
         
     return hp_dict
-        
-    
 
 if __name__=='__main__':
 
