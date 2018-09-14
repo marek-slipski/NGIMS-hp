@@ -7,7 +7,7 @@ env/
 env32/
 
 # notebooks
-notebooks/
+#notebooks/
 
 # files that need to be fixed first
 playground/

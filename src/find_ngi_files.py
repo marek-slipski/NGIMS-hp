@@ -169,6 +169,7 @@ def files_from_orbrange(start,stop,source,vers,rev):
     day = '[0-9][0-9]'
     source_str = source_to_search(source)
     vrs = vr_to_search(vers,rev)
+    print vrs
     filelist = [] #initialize list
     for orb in orbrs:
         tid = orb_to_tid(orb) #get TID
@@ -179,6 +180,7 @@ def files_from_orbrange(start,stop,source,vers,rev):
                 continue #move on to next orbit in range
         searchfile = 'mvn_ngi_l2_'+source_str+'-abund-'+str(tid)+'_'+year+month+day+time+'_'+vrs+'.csv'
         searchpath = base+year+'/'+month+'/'+searchfile
+        print searchpath
         files = glob.glob(searchpath)
         if len(files) > 1:
             print 'more than 1 TID found for TID',tid
