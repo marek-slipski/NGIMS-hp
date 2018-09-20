@@ -162,7 +162,7 @@ def yearmo_to_dates(ym):
     return starts,ends
 
 ###### Find Files ########################################
-def files_from_orbrange(start,stop,source,vers,rev):
+def files_from_orbrange(start,stop,source,vers,rev,tidfile):
     orbrs = get_orbrange(start,stop)
     year = '[0-9][0-9][0-9][0-9]'
     month = '[0-9][0-9]'
@@ -171,7 +171,7 @@ def files_from_orbrange(start,stop,source,vers,rev):
     vrs = vr_to_search(vers,rev)
     filelist = [] #initialize list
     for orb in orbrs:
-        tid = orb_to_tid(orb) #get TID
+        tid = orb_to_tid(orb,orbtidfile=tidfile) #get TID
         if tid == None: #no data for that orbit
             if len(orbrs) ==1 :
                 sys.exit('No data for Orbit '+str(orb)+' '+str(vrs)+str(rev)) #exit if no data
@@ -247,6 +247,8 @@ def parser_main(made_parser):
     parser.add_argument('--vr',action='store',dest='vers_rev',
                         default=str(config['version']).zfill(2)+str(config['revision']).zfill(2),
                         help='Version and revision: vvrr')
+    parser.add_argument('--tid_file',action='store',default='src/ngims_tid_orbit.dat',
+                       help='TID file to use (may vary as newer vrs are added)')
 
     parser.add_argument('-f','--file',action='store',dest='output',type=str,nargs='?',
                         help='Output file to save to')
@@ -276,7 +278,7 @@ def main():
         stop = args.range[1]
 
     if args.orbit:
-        file_list = files_from_orbrange(start,stop,args.source,vers,rev)
+        file_list = files_from_orbrange(start,stop,args.source,vers,rev,args.tid_file)
     elif args.date:
         #dates = get_daterange(start,stop)
         file_list = files_from_daterange(start,stop,args.source,vers,rev)
