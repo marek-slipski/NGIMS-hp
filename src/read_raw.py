@@ -107,7 +107,7 @@ def savgol_density(den_prof,winsize=9,poly=2):
     '''
     return np.exp(savgol_filter(np.log(den_prof),winsize,poly))
 
-def combine_files(filelist,io='I'):
+def combine_files(filelist,io='I',sg=False):
     pieces = []
     for f in filelist:
         df = IO_orb(read(f),io)

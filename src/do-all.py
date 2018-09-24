@@ -53,6 +53,8 @@ data_parser.add_argument('--source',choices=['neutrals','csn','cso','ion'],defau
                         help='Which NGIMS source to use. neutrals includes csn and cso')
 data_parser.add_argument('--IO',action='store',default='I',
                         help='[I]nbound or [O]outbound')
+data_parser.add_argument('--tid_file',action='store',default='src/ngims_tid_orbit.dat',
+                       help='TID file to use (may vary as newer vrs are added)')
 
 pp.plot_parse(parser)
 
@@ -102,16 +104,23 @@ orbs = np.arange(orbstart,orbend+1)
 for orb in orbs:
     binstart = orb - args.binorbits/2.
     binend = orb + args.binorbits/2.
-    binfiles = fnf.files_from_orbrange(binstart,binend,args.source,args.version,args.revision)
+    binfiles = fnf.files_from_orbrange(binstart,binend,args.source,args.version,args.revision,args.tid_file)
     
     if len(binfiles) == 0:
         continue
-        
-        
+          
     # BELOW SHOULD BE READ_RAW.MAIN()
     bin_df = rr.combine_files(binfiles,io=args.IO)  # inbound only
-    bin_df_re = rr.realign(bin_df) # convert sp and abun columns to species-specific abunds
-    bin_df_re.sort_values('alt',ascending=False,inplace=True) # order by dec altitude
+    bin_df_re = rr.realign(bin_df)# convert sp and abun columns to species-specific abunds
+    newdf = {'alt':[],'sg_N2':[],'sg_Ar':[],'sg_CO2':[]}
+    for eachorb, orbprof in bin_df_re.groupby('orbit'): 
+        newdf['alt'] += list(orbprof['alt'])
+        newdf['sg_N2'] += list(rr.savgol_density(orbprof['abundance_N2']))
+        newdf['sg_Ar'] += list(rr.savgol_density(orbprof['abundance_Ar']))
+        newdf['sg_CO2'] += list(rr.savgol_density(orbprof['abundance_CO2']))
+    newdf = pd.DataFrame(newdf)
+    print newdf.head()
+    newdf.sort_values('alt',ascending=False,inplace=True) # order by dec altitude
     
     if 'plot' in args.tasks and args.savedir:
         if args.den_plot:
@@ -122,7 +131,7 @@ for orb in orbs:
         plot_res = pp.main(bin_df_re,args)
         
     if 'hpcalc' in args.tasks:
-        hp_res =  hp.main(bin_df_re,args)
+        hp_res =  hp.main(newdf,args,N2col='sg_N2',Arcol='sg_Ar',CO2col='sg_CO2')
         for key in hp_res.keys():
             if args.savedir:
                 hp_to_dict = vars(hp_res[key][1])
@@ -132,7 +141,7 @@ for orb in orbs:
                 pieces[key].append(hp_to_dict)
                 
     if args.hpfit:
-        fit_alts = np.linspace(bin_df_re['alt'].min(),args.hp_maxalt,100)
+        fit_alts = np.linspace(newdf['alt'].min(),args.hp_maxalt,100)
         ext_alts = np.linspace(hp_res['alt'][0],250,100)
         fit_vals = np.exp(hp_res['alt'][1][0]*fit_alts + hp_res['alt'][1][1])
         ext_vals = np.exp(hp_res['alt'][1][0]*ext_alts + hp_res['alt'][1][1])

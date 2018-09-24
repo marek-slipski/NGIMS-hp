@@ -1,6 +1,6 @@
 # local files
 config.local
-output/
+#output/
 
 # virtual environment
 env/

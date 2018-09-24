@@ -19,7 +19,7 @@ def hp_parse(parser):
                           help='Calculate homopause level in CO2 density space')
     hp_parser.add_argument('--hp_maxalt',action='store',default=190.,
                           help='Maximum altitude for fit')
-    hp_parser.add_argument('--hp_maxden',action='store',default=1.e+8,
+    hp_parser.add_argument('--hp_maxden',action='store',default=1.e+7,
                           help='Minimum CO2 density for fit')
     
 def hp_N2Ar_ratio(N2,Ar,alt,ratio=1.25):
@@ -45,22 +45,22 @@ def hp_N2Ar_ratio(N2,Ar,alt,ratio=1.25):
     hp = (np.log(ratio)-fp[1])/fp[0]
     return hp,fp
 
-def CO2_hp(bm,ratio=1.25):
-    fp = sps.linregress(np.log(bm['abundance_CO2']),np.log(bm['abundance_N2']/bm['abundance_Ar']))
+def CO2_hp(N2,Ar,den,ratio=1.25):
+    fp = sps.linregress(np.log(den),np.log(N2/Ar))
     hp = np.exp((np.log(ratio)-fp[1])/fp[0])
     return hp,fp
     
-def main(data,parameters):
+def main(data,parameters,N2col='abundance_N2',Arcol='abundance_Ar',CO2col='abundance_CO2'):
     hp_dict = {}
     if parameters.hp_alt:
         alt_data = data[data['alt']<parameters.hp_maxalt]
-        alt_hp_fit = hp_N2Ar_ratio(alt_data['abundance_N2'],alt_data['abundance_Ar'],
+        alt_hp_fit = hp_N2Ar_ratio(alt_data[N2col],alt_data[Arcol],
                                    alt_data['alt'])
         hp_dict['alt'] = alt_hp_fit
         
     if parameters.hp_den:
-        den_data = data[data['abundance_CO2']>parameters.hp_maxden]
-        den_hp_fit = CO2_hp(den_data)
+        den_data = data[data[CO2col]>parameters.hp_maxden]
+        den_hp_fit = CO2_hp(den_data[N2col],den_data[Arcol],den_data[CO2col])
         hp_dict['den'] = den_hp_fit
         
     return hp_dict
