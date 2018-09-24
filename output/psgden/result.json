@@ -1,0 +1,28 @@
+{
+    "hp_maxalt": 190.0, 
+    "mr_plot": false, 
+    "tasks": [
+        "hpcalc"
+    ], 
+    "ratio": 1.25, 
+    "version": "08", 
+    "source": "neutrals", 
+    "hpfit": false, 
+    "hp_alt": false, 
+    "yaxis": "alt", 
+    "tid_file": "src/ngims_tid_orbit_v0801.dat", 
+    "orbits": [
+        713, 
+        7646
+    ], 
+    "den_plot": false, 
+    "binorbits": 11, 
+    "savedir": "psgden", 
+    "bindays": 0, 
+    "IO": "I", 
+    "den_save": null, 
+    "mr_save": null, 
+    "hp_maxden": 10000000.0, 
+    "hp_den": true, 
+    "revision": "01"
+}

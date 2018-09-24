@@ -71,7 +71,7 @@ def tid_to_orb(tidnum,orbtidfile='src/ngims_tid_orbit.dat'):
     Function to convert TID number to orbit number.
     Requires orbtidfile from make_orb_tid()
     '''
-    with open(orbtidfile,'rb') as orbf:
+    with open(orbtidfile,'r') as orbf:
         for line in orbf:
             linelist = line.rstrip().split(',')
             if linelist[2] == tidnum:
