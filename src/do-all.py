@@ -27,6 +27,7 @@ base = os.path.expanduser(tempbase+pathbase)
 ############################################
 
 parser = argparse.ArgumentParser('Parameters for calculations and plotting')
+parser.add_argument('--exocalc',action='store_true')
 
 task_parser = parser.add_argument_group('Tasks to do')
 task_parser.add_argument('tasks',choices=['plot','hpcalc'],nargs='+',
@@ -119,7 +120,6 @@ for orb in orbs:
         newdf['sg_Ar'] += list(rr.savgol_density(orbprof['abundance_Ar']))
         newdf['sg_CO2'] += list(rr.savgol_density(orbprof['abundance_CO2']))
     newdf = pd.DataFrame(newdf)
-    print newdf.head()
     newdf.sort_values('alt',ascending=False,inplace=True) # order by dec altitude
     
     if 'plot' in args.tasks and args.savedir:
@@ -130,15 +130,24 @@ for orb in orbs:
             
         plot_res = pp.main(bin_df_re,args)
         
-    if 'hpcalc' in args.tasks:
-        hp_res =  hp.main(newdf,args,N2col='sg_N2',Arcol='sg_Ar',CO2col='sg_CO2')
-        for key in hp_res.keys():
+    #if 'hpcalc' in args.tasks:
+    #    hp_res =  hp.main(newdf,args,N2col='sg_N2',Arcol='sg_Ar',CO2col='sg_CO2')
+    #    for key in hp_res.keys():
+    #        if args.savedir:
+    #            hp_to_dict = vars(hp_res[key][1])
+    #            hp_to_dict['hp_'+key] = hp_res[key][0]
+    #            hp_to_dict['orbit'] = orb
+    #            hp_to_dict['count'] = len(binfiles)
+    #            pieces[key].append(hp_to_dict)
+                
+    if 'exocalc' in args:
+        print orb
+        exo_res = hp.exo(newdf,args,N2col='sg_N2',Arcol='sg_Ar',CO2col='sg_CO2')
+        pieces['orbit'] = orb
+        pieces['count'] = len(binfiles)
+        for key in exo_res.keys():
             if args.savedir:
-                hp_to_dict = vars(hp_res[key][1])
-                hp_to_dict['hp_'+key] = hp_res[key][0]
-                hp_to_dict['orbit'] = orb
-                hp_to_dict['count'] = len(binfiles)
-                pieces[key].append(hp_to_dict)
+                pieces[key] = exo_res[key]
                 
     if args.hpfit:
         fit_alts = np.linspace(newdf['alt'].min(),args.hp_maxalt,100)
@@ -162,6 +171,8 @@ if args.savedir:
         den_df = pd.DataFrame(pieces['den'])
         merged = pd.merge(alt_df,den_df,on=['orbit','count'],suffixes=('_alt','_den'))
         merged.to_csv(savedir+'/homopause.csv',index=False)
+    elif args.exocalc:
+        pd.DataFrame(pieces).to_csv(savedir+'/exo.csv',index=False)
     
     
         
