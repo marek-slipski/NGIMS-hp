@@ -1,0 +1,29 @@
+{
+    "tasks": [
+        "hpcalc"
+    ], 
+    "exocalc": true, 
+    "hp_maxalt": 190.0, 
+    "hp_alt": false, 
+    "ratio": 1.25, 
+    "tid_file": "src/ngims_tid_orbit_v0801.dat", 
+    "source": "neutrals", 
+    "version": "08", 
+    "revision": "01", 
+    "hpfit": false, 
+    "hp_den": false, 
+    "orbits": [
+        713, 
+        7645
+    ], 
+    "savedir": "psgexo", 
+    "bindays": 0, 
+    "IO": "I", 
+    "hp_maxden": 10000000.0, 
+    "mr_plot": false, 
+    "yaxis": "alt", 
+    "den_plot": false, 
+    "binorbits": 11, 
+    "den_save": null, 
+    "mr_save": null
+}
