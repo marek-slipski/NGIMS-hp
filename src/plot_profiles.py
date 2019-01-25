@@ -8,6 +8,8 @@ import datetime as dt
 import matplotlib.pyplot as plt
 import argparse
 
+import read_raw as rr
+
 label = {'alt':'Altitude (km)','den':r'CO$_2$ number density (cm${-3}$)'}
 ycol = {'alt':'alt','den':'abundance_CO2'}
 
@@ -30,14 +32,16 @@ def density_plot(data,species=['N2','Ar','CO2'],savefile=None,yaxis='alt'):
     figd, axd = plt.subplots()
     for sp in species:
         axd.scatter(data['abundance_'+sp],data[ycol[yaxis]],color=colors[sp],
-                   s=2,linewidth=1,label=sp)
+                   s=1,linewidth=0,label=sp)
     axd.set_xscale('log')
     axd.set_xlabel(r'Number density (cm$^{-3}$)')
+    axd.set_xlim(1.e+2,1.e+12)
     if yaxis == 'den':
         axd.set_yscale('log')
         axd.invert_yaxis()
+        axd.set_ylim(1.e+12,1.e+2)
     axd.set_ylabel(label[yaxis])
-    axd.legend()
+    axd.legend(scatterpoints=3)
     if savefile:
         plt.savefig(savefile,dpi=300)
     return axd
@@ -48,15 +52,17 @@ def mixing_plot(data,mrs=['N2/Ar','N2/CO2','Ar/CO2'],savefile=None,yaxis='alt'):
     for mr in mrs:
         sps = mr.split('/')
         axr.scatter(data['abundance_'+sps[0]]/data['abundance_'+sps[1]],
-                   data[ycol[yaxis]],s=2,color=colors[mr],linewidth=1,
+                   data[ycol[yaxis]],s=1,color=colors[mr],linewidth=0,
                    label=mr)
     axr.set_xscale('log')
     axr.set_xlabel(r'Mixing ratio')
+    axr.set_xlim(1.e-4,1.e+4)
     if yaxis == 'den':
         axr.set_yscale('log')
         axr.invert_yaxis()
+        axr.set_ylim(1.e+12,1.e+2)
     axr.set_ylabel(label[yaxis])
-    axr.legend()
+    axr.legend(scatterpoints=3)
     if savefile:
         plt.savefig(savefile,dpi=300)
     return axr
@@ -71,22 +77,18 @@ def main(data,plotinfo):
         
         
 if __name__=='__main__':
-    import read_raw as rr
-    
-    parser = argparse.ArgumentParser()
-    
-    rr.input_parse(parser)
-    
-    plot_parse(parser)
-    
-    args = parser.parse_args()
+    # Parse Input
+    parser = argparse.ArgumentParser() # initialize 
+    rr.input_parse(parser) # data input
+    plot_parse(parser) # plotting options
+    args = parser.parse_args() # parse
 
+    # Open and preprocess data
     files = rr.files_from_parse(args)
     bin_df = rr.combine_files(files,io='I')  # inbound only
     bin_df_re = rr.realign(bin_df) # convert sp and abun columns to species-specific abunds
     bin_df_re.sort_values('alt',ascending=False,inplace=True) # order by dec altitude
     
-    
-    
+    # Make plots and show
     main(bin_df_re,args)
     plt.show()

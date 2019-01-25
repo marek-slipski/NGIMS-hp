@@ -57,7 +57,7 @@ def vr_to_search(v,r):
     return versrev
 
 
-def orb_to_tid(orbnum,orbtidfile='src/ngims_tid_orbit.dat'):
+def orb_to_tid(orbnum,orbtidfile):
     dType = [str,int,int]
     with open(orbtidfile,'rb') as f:
         for line in f:
@@ -66,7 +66,7 @@ def orb_to_tid(orbnum,orbtidfile='src/ngims_tid_orbit.dat'):
             if linelist[1] == orbnum:
                 return linelist[2]
 
-def tid_to_orb(tidnum,orbtidfile='src/ngims_tid_orbit.dat'):
+def tid_to_orb(tidnum,orbtidfile):
     '''
     Function to convert TID number to orbit number.
     Requires orbtidfile from make_orb_tid()
@@ -169,12 +169,13 @@ def files_from_orbrange(start,stop,source,vers,rev,tidfile):
     day = '[0-9][0-9]'
     source_str = source_to_search(source)
     vrs = vr_to_search(vers,rev)
+    print(vrs)
     filelist = [] #initialize list
     for orb in orbrs:
         tid = orb_to_tid(orb,orbtidfile=tidfile) #get TID
         if tid == None: #no data for that orbit
             if len(orbrs) ==1 :
-                sys.exit('No data for Orbit '+str(orb)+' '+str(vrs)+str(rev)) #exit if no data
+                sys.exit('No data for Orbit '+str(orb)+' '+str(vrs)) #exit if no data
             else:
                 continue #move on to next orbit in range
         searchfile = 'mvn_ngi_l2_'+source_str+'-abund-'+str(tid)+'_'+year+month+day+time+'_'+vrs+'.csv'
@@ -226,20 +227,23 @@ def files_from_daterange(start,stop,source,vers,rev):
 
 def parser_main(made_parser):
     parser = made_parser.add_argument_group(description='NGIMS L2 search options')
-    parser.add_argument('-s',type=int,action='store',dest='single',
-                        help='Single value to look for')
-    parser.add_argument('-r',type=int,nargs=2,action='store',dest='range',
-                        help='Range between which to search, inclusive')
+    #parser.add_argument('-s',type=int,action='store',dest='single',
+    #                    help='Single value to look for')
+    #parser.add_argument('-r',type=int,nargs=2,action='store',dest='range',
+    #                    help='Range between which to search, inclusive')
+    
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('-o','--orbit', action='store',dest='orbit',
+                       nargs='+', type=int,
+                       help='Orbit or range or orbits [START STOP]')
+    group.add_argument('-d','--date', action='store',dest='date',
+                       nargs = '+', type=int,
+                       help=('Date or range of dates [START STOP] '+
+                             'formatted as YYYYMMDD or YYYYMMDDhhmmss'))
 
     parser.add_argument('-ot',action='store',dest='orbtid',
                         help='Create orbit-tid file and save to input')
 
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument('-o','--orbit', action='store_true',dest='orbit',
-                       help='Value(s) given as [o]rbit(s)')
-    group.add_argument('-d','--date', action='store_true',dest='date',
-                        help='Value(s) givnen as [d]ate(s) formatted as'+\
-                        'YYYYMMDD or YYYYMMDDhhmmss')
 
     parser.add_argument('--source',choices=['neutrals','csn','cso','ion'],
                         default='neutrals',
@@ -247,8 +251,8 @@ def parser_main(made_parser):
     parser.add_argument('--vr',action='store',dest='vers_rev',
                         default=str(config['version']).zfill(2)+str(config['revision']).zfill(2),
                         help='Version and revision: vvrr')
-    parser.add_argument('--tid_file',action='store',default='src/ngims_tid_orbit.dat',
-                       help='TID file to use (may vary as newer vrs are added)')
+    #parser.add_argument('--tid_file',action='store',default='orbtid/ngims_tid_orbit.dat',
+    #                   help='TID file to use (may vary as newer vrs are added)')
 
     parser.add_argument('-f','--file',action='store',dest='output',type=str,nargs='?',
                         help='Output file to save to')
@@ -261,26 +265,39 @@ def main():
     #######################################################################
     vers = args.vers_rev[0:2]
     rev = args.vers_rev[2:4]
+    
+    tidfile = str('orbtid/ngims_tid_orbit_v'+vers+rev+'.dat')
 
-    try:
-        open('src/ngims_tid_orbit.dat','rb')
+    try:        
+        open(tidfile,'rb')
     except:
-        make_orb_tid(args.source,vers,rev,'src/ngims_tid_orbit.dat')
+        make_orb_tid(args.source,vers,rev,tidfile)
 
     if args.orbtid:
         make_orb_tid(args.source,vers,rev,args.orbtid)
 
-    if args.single:
-        start = args.single
-        stop = args.single
-    elif args.range:
-        start = args.range[0]
-        stop = args.range[1]
-
+    # LOOKUP BY ORBIT
     if args.orbit:
-        file_list = files_from_orbrange(start,stop,args.source,vers,rev,args.tid_file)
+        # Prepare start and stop orbits
+        start = args.orbit[0]
+        if len(args.orbit) == 2:
+            stop = args.orbit[1]
+        elif len(args.orbit) == 1:
+            stop = start
+        else:
+            sys.exit('Too many orbits to unpack - either 1 or start/end range')
+        
+        # Get list of files
+        file_list = files_from_orbrange(start,stop,args.source,vers,rev,tidfile)
+        
+    # LOOKUP BY DATE
     elif args.date:
-        #dates = get_daterange(start,stop)
+        # Prepare start and stop dates
+        start = args.date[0]
+        if len(args.date) == 2:
+            stop = args.date[1]
+        elif len(args.date) == 1:
+            stop = start
         file_list = files_from_daterange(start,stop,args.source,vers,rev)
     #else: # No target specified
         #file_list = all_files()

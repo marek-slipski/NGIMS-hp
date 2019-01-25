@@ -1,6 +1,7 @@
 # local files
 config.local
-#output/
+orbtid/
+output/
 
 # virtual environment
 env/

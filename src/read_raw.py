@@ -14,7 +14,7 @@ import sys
 # 20170705
 ################################################################################
 def input_parse(parser):
-    in_parser = parser.add_argument_group('Are files coming from pipe or files?')
+    in_parser = parser.add_argument_group('Are files coming from pipe or file?')
     ingroup = in_parser.add_mutually_exclusive_group()
     ingroup.add_argument('-p','--pipe',action='store_true',dest='pipe',
                          help='Pipe in list of files (e.g. from find_ngi_files)')
@@ -32,7 +32,7 @@ def files_from_parse(pargs):
         for line in sys.stdin:
             files.append(line.strip())
     elif pargs.infile:
-        with open(args.infile) as f:
+        with pargs.infile as f:
             files = [x.strip() for x in f]
     else:
         sys.exit('Pipe or input file?')

@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 import datetime as dt
+import argparse
+import sys
 import scipy.stats as sps
 import scipy.integrate as spi
 
@@ -43,10 +45,6 @@ def hp_parse(parser):
     hp_parser = parser.add_argument_group('Homopause calculation parameters')
     hp_parser.add_argument('--ratio',default=1.25,
                           help='N2/Ar ratio in the lower atmosphere')
-    hp_parser.add_argument('--hp_alt',action='store_true',default=False,
-                          help='Calculate homopause altitude')
-    hp_parser.add_argument('--hp_den',action='store_true',default=False,
-                          help='Calculate homopause level in CO2 density space')
     hp_parser.add_argument('--hp_maxalt',action='store',default=190.,
                           help='Maximum altitude for fit')
     hp_parser.add_argument('--hp_maxden',action='store',default=1.e+7,
@@ -132,16 +130,14 @@ def exo_Ar_int(CO2,Ar,alt,exsp=['CO2'],ArXsec=[3.e-15],\
     
 def main(data,parameters,N2col='abundance_N2',Arcol='abundance_Ar',CO2col='abundance_CO2'):
     hp_dict = {}
-    if parameters.hp_alt:
-        alt_data = data[data['alt']<parameters.hp_maxalt]
-        alt_hp_fit = hp_N2Ar_ratio(alt_data[N2col],alt_data[Arcol],
-                                   alt_data['alt'])
-        hp_dict['alt'] = alt_hp_fit
+    alt_data = data[data['alt']<parameters.hp_maxalt]
+    alt_hp_fit = hp_N2Ar_ratio(alt_data[N2col],alt_data[Arcol],
+                               alt_data['alt'])
+    hp_dict['hp_alt'] = alt_hp_fit
         
-    if parameters.hp_den:
-        den_data = data[data[CO2col]>parameters.hp_maxden]
-        den_hp_fit = CO2_hp(den_data[N2col],den_data[Arcol],den_data[CO2col])
-        hp_dict['den'] = den_hp_fit
+    den_data = data[data[CO2col]>parameters.hp_maxden]
+    den_hp_fit = CO2_hp(den_data[N2col],den_data[Arcol],den_data[CO2col])
+    hp_dict['hp_den'] = den_hp_fit
         
     return hp_dict
 
@@ -159,36 +155,21 @@ def exo(data,parameters,N2col='abundance_N2',Arcol='abundance_Ar',CO2col='abunda
     return exo_dict
 
 if __name__=='__main__':
-
-    # Date Parameters
-    date_s = dt.datetime(2015,10,25) # start date
-    date_e = dt.datetime(2015,10,27) # end date
-    daybin = 2 # total days in each bin
-    date = date_s + dt.timedelta(days = daybin/2.) # adj start date to bin center
-
-    # Data Parameters
-    source =  'neutrals'
-    version = 7
-    revision = 1
-
-    # Homopause Parameters
-    max_alt = 200.
-
-    # Plot Parameters
-    plots = False
-
-    # March through dates
-    while date <= date_e - dt.timedelta(days = daybin/2.):
-        print date
-        bin_start = date - dt.timedelta(days = daybin/2.) # half of days before
-        bin_end = date + dt.timedelta(days = daybin/2.) # half after
-
-        # Collect filenames
-        bin_files = fnf.files_from_daterange(bin_start,bin_end,source,version,revision) 
-
-
-
-        date = date + dt.timedelta(days = daybin) # advance one bin width
+    # Parse Input
+    parser = argparse.ArgumentParser() # initialize
+    rr.input_parse(parser) # data input
+    hp_parse(parser) # homopause options
+    args = parser.parse_args() # parse
+    
+    # Open and preprocess data
+    files = rr.files_from_parse(args)
+    bin_df = rr.combine_files(files,io='I')  # inbound only
+    bin_df_re = rr.realign(bin_df) # convert sp and abun columns to species-specific abunds
+    bin_df_re.sort_values('alt',ascending=False,inplace=True) # order by dec altitude
+    
+    # Calculate Homopause altitude and density
+    hp = main(bin_df_re,args)
+    print(hp)
     
     
     

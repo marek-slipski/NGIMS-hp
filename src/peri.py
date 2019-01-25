@@ -7,7 +7,7 @@ import find_ngi_files as fnf
 import read_raw as rr
 import MT
 
-tid = pd.read_csv('src/ngims_tid_orbit_v0801.dat',names=['csn','orbit','tid'])
+#tid = pd.read_csv('src/ngims_tid_orbit_v0801.dat',names=['csn','orbit','tid'])
 orbs = list(tid['orbit'])
 
 peri_dict = {}
