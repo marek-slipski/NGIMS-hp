@@ -24,7 +24,7 @@ Use `python src/find_ngi_files.py` to create list of filenames within orbit or d
 `python src/hp_calc_bins.py`
 
 ## Homopause altitudes over course of mission
-![Homopause altitudes (red) and Exobase altitudes (blue).](figs/Fig2.pdf)
+![](/figs/Fig3-hp-sza-Ls_viridis.png)
 
 
 
