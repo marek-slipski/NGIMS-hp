@@ -1,0 +1,11 @@
+#!/bin/bash
+# Edit the names if necessary
+dockerhub=marekslipski
+imagename=test
+imagetag=test
+# full image name
+full_image_name=$dockerhub/${imagename}:${imagetag}
+# Build image
+echo "Building image ${full_image_name}"
+docker image build -t ${full_image_name} -f Dockerfile .
+echo "Sucessfully built image ${full_image_name}"

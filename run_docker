@@ -1,0 +1,21 @@
+#!/bin/bash
+#
+# Executeable
+# ./docker_run.sh command port
+# 
+# Example:
+# Run a jupyter notebook
+# ./docker_run 
+# Run a bash script on a different port
+# ./docker_run bash 7878
+optional_command=$1
+port=${2:-8989}
+docker run --user=$(id -u) \
+   --env="DISPLAY" \
+   --volume="/etc/group:/etc/group:ro" \
+   --volume="/etc/passwd:/etc/passwd:ro" \
+   --volume="/etc/shadow:/etc/shadow:ro" \
+   --volume="/etc/sudoers.d:/etc/sudoers.d:ro" \
+   --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
+   --rm -ti -v ${PWD}:/app/ -p $port:8989 -p 8502:8502 -p 8051:8051 \
+   --ipc=host --hostname localhost marekslipski/test:test $1

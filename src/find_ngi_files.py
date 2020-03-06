@@ -110,7 +110,7 @@ def all_files(v,r,source='neutrals'):
 def make_orb_tid(source,vers,rev,savefile):
     os.system('rm -f '+savefile) #remove old, create new
     allfiles = all_files(vers,rev,source)
-    print 'Creating new NGIMS orbit/tid file...'
+    print('Creating new NGIMS orbit/tid file...')
     for f in allfiles:
         #read focusmode, tid, and orbit columns from csv file
         #then append to new savefile
@@ -182,7 +182,7 @@ def files_from_orbrange(start,stop,source,vers,rev,tidfile):
         searchpath = base+year+'/'+month+'/'+searchfile
         files = glob.glob(searchpath)
         if len(files) > 1:
-            print 'more than 1 TID found for TID',tid
+            print('more than 1 TID found for TID',tid)
         else:
             filename = files[0]
         filelist.append(filename) #add to filelist
@@ -303,7 +303,7 @@ def main():
         #file_list = all_files()
 
     for fl in file_list:
-        print fl
+        print(fl)
     ####################################################
 
     ### OUTPUT TO SAVE FILE ###########################

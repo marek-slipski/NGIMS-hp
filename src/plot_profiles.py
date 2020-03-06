@@ -2,6 +2,10 @@
 # Marek Slipski
 # 20180625
 
+import matplotlib
+# Force matplotlib to not use any Xwindows backend.
+#matplotlib.use('Tkagg')
+
 import pandas as pd
 import numpy as np
 import datetime as dt

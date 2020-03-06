@@ -18,7 +18,7 @@ def input_parse(parser):
     ingroup = in_parser.add_mutually_exclusive_group()
     ingroup.add_argument('-p','--pipe',action='store_true',dest='pipe',
                          help='Pipe in list of files (e.g. from find_ngi_files)')
-    ingroup.add_argument('-f','--infile',action='store',dest='infile',type=file,
+    ingroup.add_argument('-f','--infile',action='store',dest='infile',type=argparse.FileType('r'),
                          help='Give filename that contains one file per line')
 
     return ingroup
@@ -145,7 +145,7 @@ def realign(data):
         sp_sep[sp] = data[data['species']==sp].drop('species',axis=1) #sp specific DF
         # rename sp-dependent columns
         sp_sep[sp].rename(columns={x:x+'_'+sp for x in col_rename},inplace=True)
-    picksp = sp_sep.keys()[0] # choose some species for starting DF
+    picksp = list(sp_sep.keys())[0] # choose some species for starting DF
     newdf = sp_sep[picksp] #create DF to update
     for sp in sp_sep: #loop though each separate species DF
         if sp == picksp: #don't update for first species

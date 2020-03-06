@@ -7,6 +7,9 @@ output/
 env/
 env32/
 
+# Data
+data/
+
 # notebooks
 #notebooks/
 
@@ -16,6 +19,7 @@ playground/
 # accessory files
 src/*.pyc
 .ipynb_checkpoints/
+*__pycache__/
 
 # files to be removed
 src/orbit_bins_test.py
