@@ -1,5 +1,6 @@
 dask[complete]
 Click
+graphviz
 pandas
 scikit-learn
 jupyterlab

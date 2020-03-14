@@ -24,3 +24,7 @@ src/*.pyc
 # files to be removed
 src/orbit_bins_test.py
 
+# dask
+noteboooks/dask-worker-space/*
+notebooks/mydask.png
+
