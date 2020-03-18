@@ -25,6 +25,6 @@ src/*.pyc
 src/orbit_bins_test.py
 
 # dask
-noteboooks/dask-worker-space/*
+notebooks/dask-worker-space
 notebooks/mydask.png
 

@@ -1,6 +1,7 @@
 dask[complete]
 Click
 graphviz
+jupyterlab
+matplotlib
 pandas
 scikit-learn
-jupyterlab
