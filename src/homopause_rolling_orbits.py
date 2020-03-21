@@ -9,7 +9,7 @@ import numpy as np
 import scipy.stats as sps
 from sklearn import linear_model
 
-from global_params import PATH_NGI_L2
+from global_params import PATH_NGI_L2, NA_VALUES
 
 DEFAULT_ORBIT_SPAN = 10
 DEFAULT_MAX_ALT = 200.
@@ -22,7 +22,6 @@ META_COLS = {
     "abundance": float,
     "t_unix": float
 }
-NA_VALUES = [" ", "-999", np.inf, "Inf", "inf"]
 
 def make_orbit_path_map(ddf, orb_span):
     orb_path_map = ddf[["orbit", "path"]].drop_duplicates().compute()

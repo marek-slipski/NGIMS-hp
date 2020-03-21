@@ -31,7 +31,7 @@ def getJD(iTime):
         minute = iTime[4]
         sec = iTime[5]
         
-    except Exception, e:
+    except Exception as e:
         year = iTime.year
         month = iTime.month
         day = iTime.day
@@ -89,8 +89,8 @@ def testJ2000():
     testJD = getJ2000(iTime)
     callibration = 58891502.000000 #test should be this value.
     diff = testJD - callibration
-    print testJD
-    print 'difference = {0}s'.format(diff)
+    #print testJD
+    #print 'difference = {0}s'.format(diff)
 
 def testUTC():
     jd = 2452226.614606
@@ -98,8 +98,8 @@ def testUTC():
 
     callibration = datetime.datetime(2001,11,13,2,45,2)
     diff = callibration - date
-    print date
-    print 'difference = {}'.format(diff)
+    #print date
+    #print 'difference = {}'.format(diff)
 
 
 def testLS():
@@ -109,8 +109,8 @@ def testLS():
     year = lsdata.year
     callibration = 277.18677
     diff = ls - callibration
-    print ls
-    print 'Difference = {:f} degrees'.format(diff)
+    #print ls
+    #print 'Difference = {:f} degrees'.format(diff)
 
 def getMarsParams(j2000):
     '''Mars time parameters'''
@@ -230,8 +230,8 @@ def getUTCfromLS(marsyear,LS):
 
 
 		if iTry > 1000:
-			print 'Problem getting UTC from Ls in 2nd diff loop'
-			print 'Quitting if function getUTCfromLS...'
+			#print 'Problem getting UTC from Ls in 2nd diff loop'
+			#print 'Quitting if function getUTCfromLS...'
 			exit(1)
 
 	return iTime
@@ -286,7 +286,7 @@ def SZAGetTime(sza,date, lon, lat):
 		
 		count += 1
 		if abs(diff - newdiff)/2. < error and counter > 5:	
-			print 'this location doesnt reach the given SZA.  Returning closest value... {:f}'.format(thisSza)
+			#print 'this location doesnt reach the given SZA.  Returning closest value... {:f}'.format(thisSza)
 			return thisDate, thisSza
 
 		diff = newdiff
@@ -301,8 +301,8 @@ def testSZA():
 	lat = 0.0
 	expected = 154.26182
 	sza = getSZAfromTime(itime,lon,lat)
-	print sza
-	print 'Difference = {:f} degrees'.format(sza-expected)
+	#print sza
+	#print 'Difference = {:f} degrees'.format(sza-expected)
 
 
 def getLTfromTime(iTime,lon):
@@ -324,8 +324,8 @@ def testLTfromTime():
 	lon = 0.0
 	LTST = getLTfromTime(iTime,lon)
 	expected = 23.64847
-	print LTST
-	print 'Difference = {:f} degrees'.format(LTST-expected)
+	#print LTST
+	#print 'Difference = {:f} degrees'.format(LTST-expected)
 
 def mapSZA(iTime):
 	'''Create an SZA map given an Earth time
