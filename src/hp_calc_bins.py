@@ -8,8 +8,8 @@ import scipy.integrate as spi
 
 import matplotlib.pyplot as plt
 
-import find_ngi_files as fnf
-import read_raw as rr
+import src.find_ngi_files as fnf
+import src.read_raw as rr
 
 #Some constants
 g = 3.81 #m/s^2 surface gravity
@@ -119,10 +119,10 @@ def exo_Ar_int(CO2,Ar,alt,exsp=['CO2'],ArXsec=[3.e-15],\
     findTau1 = np.where((Tau_int>taufrange[0])&(Tau_int<taufrange[-1])) #cond to find Tau=1
     if len(Tau_int[findTau1])<5: #warn if fitting line to only a few pts
         if np.max(Tau_int) < 1:
-            print 'Never reaches tau=1, <'+str(int(altmids[-1]))+'?'
+            print('Never reaches tau=1, <'+str(int(altmids[-1]))+'?')
             return np.NaN, (np.NaN,np.NaN,np.NaN,np.NaN,np.NaN)
         else:
-            print 'Has <5 points near tau=',taufrange[0],'-',taufrange[-1]
+            print('Has <5 points near tau=',taufrange[0],'-',taufrange[-1])
             return np.NaN, (np.NaN,np.NaN,np.NaN,np.NaN,np.NaN)
     fitTau = sps.linregress(altmids[findTau1],Tau_int[findTau1])
     exo = (1-fitTau[1])/fitTau[0] #find alt where Tau=1
