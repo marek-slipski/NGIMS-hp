@@ -1,20 +1,20 @@
 import click
 import dask
 import dask.dataframe as dd
-from distributed import Client
 import glob
+import os
 import pandas as pd
-from pathlib import Path 
 import numpy as np
 import scipy.stats as sps
 from sklearn import linear_model
 
 from global_params import PATH_NGI_L2, NA_VALUES
+from src.hp_calc_bins import exo_Ar_int
 
 DEFAULT_ORBIT_SPAN = 10
 DEFAULT_MAX_ALT = 200.
 DEFAULT_YEARS = [2015, 2016, 2017, 2018, 2019]
-OUTPUT_DIR = Path("output")
+OUTPUT_DIR = "output"
 META_COLS = {
     "orbit": int,
     "alt": float,
@@ -33,7 +33,7 @@ def make_orbit_path_map(ddf, orb_span):
     orb_filename_map = {
         x: orb_path_map["path"][orb_path_map["orbit"].isin(orb_orb_map[x])].tolist() 
         for x in orb_orb_map.keys()
-}
+    }
     return orb_filename_map
 
 def IO_orb(orbdata,io='I') -> pd.DataFrame:
@@ -64,14 +64,21 @@ def get_r2(df, lr):
 def hp_from_fit(ratio, slope, intercept):
     return (np.log(ratio)-intercept)/slope
 
-def compute_results_subset(orb_filename_map, max_alt):
+def compute_results_subset(orb_filename_map, max_alt, hp_ex="hp"):
+    if hp_ex == "hp":
+        calc_fnc = hp_files
+    elif hp_ex == "exo":
+        calc_fnc = exo_files
     # Initialize results
     results_hp = []
     results_orb = []
     # Loop through each orbit
     for orb, files in orb_filename_map.items():
         results_orb.append(orb) # track orbits
-        res_single = hp_files(files, max_alt) # calc hp and other params
+        if max_alt:
+            res_single = calc_fnc(files, max_alt) # calc hp and other params
+        else:
+            res_single = calc_fnc(files)
         results_hp.append(res_single) # track results
     results = dask.compute(*results_hp) # compute results
     res_df = pd.DataFrame(results) # convert to DF
@@ -112,8 +119,41 @@ def hp_files(files, max_alt):
     }
     return hp_res
 
+@dask.delayed()
+def exo_files(files):
+    temp_ddf = dd.read_csv(
+        files, 
+        assume_missing=True, 
+        usecols=list(META_COLS.keys()),
+        dtype=META_COLS,
+        na_values = NA_VALUES
+    )
+    temp_ddf = temp_ddf.map_partitions(IO_orb, meta=temp_ddf)
+    temp_ddf = temp_ddf[(temp_ddf["abundance"] > 0.) & (temp_ddf["species"].isin(["Ar", "CO2"]))]
+    df = temp_ddf.compute()
+    norbs = len(df["orbit"].unique())
+    df = df.pivot_table(values=["abundance"], index=["orbit", "alt", "species"]).unstack()
+    df = df.dropna()
+    df = df.droplevel("orbit")
+    df = df.sort_index(ascending=False)
+    Ar = df[("abundance", "Ar")]
+    CO2 = df[("abundance", "CO2")]
+    alt = np.array(df.index.tolist())
+    exo = exo_Ar_int(CO2, Ar, alt, taufrange=[0,2])
+    exo_res = {
+        "exo_alt": exo[0], 
+        "fit_slope": exo[1][0], 
+        "fit_intercept": exo[1][1], 
+        "n_orbits": norbs, 
+    }
+    return exo_res
+
 @click.command()
-@click.option("--all_data", is_flag=True, help="Calculate homopause altitudes for entire data set")
+@click.argument(
+    "hp_ex",
+    type=click.Choice(["hp", "exo"])
+)
+@click.option("--all-data", is_flag=True, help="Calculate homopause altitudes for entire data set")
 @click.option(
     "--orbit_span", 
     type=int, 
@@ -126,13 +166,15 @@ def hp_files(files, max_alt):
     default=DEFAULT_MAX_ALT,
     help="Maximum altitude of data used to calculate homopause"
 )
-def main(all_data, orbit_span, max_alt):
+def main(hp_ex, all_data, orbit_span, max_alt):
+    if hp_ex == "exo":
+        max_alt = None
     if all_data:
         for year in DEFAULT_YEARS:
             print(f"Loading {year} data")
             # Get path to subset of data
-            filelist = Path(PATH_NGI_L2, f"{year}/*/*.csv")
-            save_path_year = OUTPUT_DIR / f"{year}_hp.csv"
+            filelist = os.path.join(PATH_NGI_L2, f"{year}/*/*.csv")
+            save_path_year = os.path.join(OUTPUT_DIR, f"{year}_{hp_ex}.csv")
             # Load chunk of data (only a few columns)
             data_in_range = dd.read_csv(
                 filelist, 
@@ -146,11 +188,10 @@ def main(all_data, orbit_span, max_alt):
             # Map orbit numbers to all files within range of orbits
             orb_path_map = make_orbit_path_map(data_in_range, orbit_span)
             del data_in_range # no need to keep all that data in memory
-            print("Calculating homopause altitudes")
-            results_subset = compute_results_subset(orb_path_map, max_alt)
+            print("Calculating altitudes")
+            results_subset = compute_results_subset(orb_path_map, max_alt, hp_ex=hp_ex)
             print(f"Saving results to {save_path_year}")
             results_subset.to_csv(save_path_year, index=False)
 
 if __name__=="__main__":
-    client = Client()
     main()

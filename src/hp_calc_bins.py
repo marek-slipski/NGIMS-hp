@@ -79,7 +79,7 @@ def CO2_hp(N2,Ar,den,ratio=1.25):
     return hp,fp
 
 def exo_Ar_int(CO2,Ar,alt,exsp=['CO2'],ArXsec=[3.e-15],\
-           Ntop=[0.,0.],taufrange=[0.,5]):
+           Ntop=[0.,0.],taufrange=[0.,5], minpts=10):
     '''
     Calculate exobase altitude from species profiles
     (BE SURE TO USE INBOUND)
@@ -107,22 +107,15 @@ def exo_Ar_int(CO2,Ar,alt,exsp=['CO2'],ArXsec=[3.e-15],\
     altkm = np.array(alt)*1.e+5
     Tau_sp_dz = np.zeros((len(exsp),len(altkm)))  #initialize Tau/z
     for i,s in enumerate(xsec): #loop through species to use
-        #colname = 'abundance_'+s
-        #if colname in orb_df.columns: #check given species in DF
         Tau_sp_dz[i] = CO2*xsec[s] #calc n*sigma
-        #else:
-        #    print 'has no column '+colname
-        #    return np.NaN
     Tau_tot_dz = np.sum(Tau_sp_dz,axis=0) #add each sp n*sigma together
     Tau_int = spi.cumtrapz(Tau_tot_dz,altkm*-1) #n*dz*sigma=N*sigma=Tau
     altmids = ((altkm[1:] + altkm[:-1]) / 2)/1.e+5 #gid mid alts in km
     findTau1 = np.where((Tau_int>taufrange[0])&(Tau_int<taufrange[-1])) #cond to find Tau=1
-    if len(Tau_int[findTau1])<5: #warn if fitting line to only a few pts
+    if len(Tau_int[findTau1])<minpts: #warn if fitting line to only a few pts
         if np.max(Tau_int) < 1:
-            print('Never reaches tau=1, <'+str(int(altmids[-1]))+'?')
             return np.NaN, (np.NaN,np.NaN,np.NaN,np.NaN,np.NaN)
         else:
-            print('Has <5 points near tau=',taufrange[0],'-',taufrange[-1])
             return np.NaN, (np.NaN,np.NaN,np.NaN,np.NaN,np.NaN)
     fitTau = sps.linregress(altmids[findTau1],Tau_int[findTau1])
     exo = (1-fitTau[1])/fitTau[0] #find alt where Tau=1
