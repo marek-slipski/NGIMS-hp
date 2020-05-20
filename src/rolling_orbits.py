@@ -191,7 +191,7 @@ def main(hp_ex, all_data, orbit_span, max_alt):
             print("Calculating altitudes")
             results_subset = compute_results_subset(orb_path_map, max_alt, hp_ex=hp_ex)
             print(f"Saving results to {save_path_year}")
-            results_subset.to_csv(save_path_year, index=False)
+            results_subset.to_csv(save_path_year)
 
 if __name__=="__main__":
     main()
