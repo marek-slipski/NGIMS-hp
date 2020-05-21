@@ -9,7 +9,7 @@ import scipy.stats as sps
 from sklearn import linear_model
 
 from global_params import PATH_NGI_L2, NA_VALUES
-from src.hp_calc_bins import exo_Ar_int
+from src.hp_calc_bins import exo_Ar_int, x_to_T
 
 DEFAULT_ORBIT_SPAN = 10
 DEFAULT_MAX_ALT = 200.
@@ -48,17 +48,17 @@ def IO_orb(orbdata,io='I') -> pd.DataFrame:
         return orbdata[orbdata['t_unix']>peri_t[0]]
     else:
         return orbdata
-
-def fit_ratio_alt(df):
+    
+def fit_log_alt(df, col):
     x = df[["alt"]]
-    y = np.log(df["N2/Ar"])
+    y = np.log(df[col])
     lr = linear_model.LinearRegression()
     lr.fit(x, y)
     return lr
 
-def get_r2(df, lr):
+def get_r2(df, lr, col):
     x = df[["alt"]]
-    y = np.log(df["N2/Ar"])
+    y = np.log(df[col])
     return lr.score(x, y)
 
 def hp_from_fit(ratio, slope, intercept):
@@ -69,6 +69,8 @@ def compute_results_subset(orb_filename_map, max_alt, hp_ex="hp"):
         calc_fnc = hp_files
     elif hp_ex == "exo":
         calc_fnc = exo_files
+    elif hp_ex == "H":
+        calc_fnc = H_files
     # Initialize results
     results_hp = []
     results_orb = []
@@ -105,7 +107,7 @@ def hp_files(files, max_alt):
     df["N2/Ar"] = df["abundance"]["N2"] / df["abundance"]["Ar"]
     df = df["N2/Ar"].reset_index().dropna(subset=["alt", "N2/Ar"])
     try:
-        fit = fit_ratio_alt(df)
+        fit = fit_log_alt(df, "N2/Ar")
     except ValueError:
         return {"hp_alt": np.nan, "fit_slope": np.nan, "fit_intercept": np.nan, "n_orbits": norbs}
     hp = hp_from_fit(1.25, fit.coef_[0], fit.intercept_)
@@ -115,12 +117,12 @@ def hp_files(files, max_alt):
         "fit_intercept": fit.intercept_, 
         "n_orbits": norbs, 
         "max_alt": max_alt,
-        "score": get_r2(df, fit)
+        "score": get_r2(df, fit, "N2/Ar")
     }
     return hp_res
 
 @dask.delayed()
-def exo_files(files):
+def exo_files(files, max_alt):
     temp_ddf = dd.read_csv(
         files, 
         assume_missing=True, 
@@ -148,10 +150,76 @@ def exo_files(files):
     }
     return exo_res
 
+@dask.delayed()
+def H_files(files, max_alt):
+    temp_ddf = dd.read_csv(
+        files, 
+        assume_missing=True, 
+        usecols=list(META_COLS.keys()),
+        dtype=META_COLS,
+        na_values = NA_VALUES
+    )
+    temp_ddf = temp_ddf.map_partitions(IO_orb, meta=temp_ddf)
+    temp_ddf = temp_ddf[
+        (temp_ddf["abundance"] > 0.) & (temp_ddf["alt"] < max_alt) & (temp_ddf["species"].isin(["Ar", "N2", "CO2"]))
+    ]
+    df = temp_ddf.compute()
+    norbs = len(df["orbit"].unique())
+    df = df.pivot_table(values=["abundance"], index=["orbit", "alt", "species"]).unstack()
+    df = df.reset_index().dropna()
+    nan_dict = {
+        "H_Ar": np.nan, 
+        "fit_slope_Ar": np.nan, 
+        "fit_intercept_Ar": np.nan, 
+        "score_Ar": np.nan,
+        "H_N2": np.nan, 
+        "fit_slope_N2": np.nan, 
+        "fit_intercept_N2": np.nan, 
+        "score_N2": np.nan,
+        "H_CO2": np.nan, 
+        "fit_slope_CO2": np.nan, 
+        "fit_intercept_CO2": np.nan, 
+        "score_CO2": np.nan,
+        "n_orbits": norbs,
+        "max_alt": np.nan
+    }
+    try:
+        fit_Ar = fit_log_alt(df, ("abundance", "Ar"))
+    except ValueError:
+        return nan_dict
+    try:
+        fit_N2 = fit_log_alt(df, ("abundance", "N2"))
+    except ValueError:
+        return nan_dict
+    try:
+        fit_CO2 = fit_log_alt(df, ("abundance", "CO2"))
+    except ValueError:
+        return nan_dict
+    H_Ar = fit_Ar.coef_[0]**-1*-1
+    H_N2 = fit_N2.coef_[0]**-1*-1
+    H_CO2 = fit_CO2.coef_[0]**-1*-1
+    H_res = {
+        "H_Ar": H_Ar, 
+        "fit_slope_Ar": fit_Ar.coef_[0], 
+        "fit_intercept_Ar": fit_Ar.intercept_,
+        "score_Ar": get_r2(df, fit_Ar, ("abundance", "Ar")),
+        "H_N2": H_N2, 
+        "fit_slope_N2": fit_N2.coef_[0], 
+        "fit_intercept_N2": fit_N2.intercept_, 
+        "score_N2": get_r2(df, fit_N2, ("abundance", "N2")),
+        "H_CO2": H_CO2, 
+        "fit_slope_CO2": fit_CO2.coef_[0], 
+        "fit_intercept_CO2": fit_CO2.intercept_, 
+        "score_CO2": get_r2(df, fit_CO2, ("abundance", "CO2")),
+        "n_orbits": norbs,
+        "max_alt": max_alt
+    }
+    return H_res
+
 @click.command()
 @click.argument(
     "hp_ex",
-    type=click.Choice(["hp", "exo"])
+    type=click.Choice(["hp", "exo", "H"])
 )
 @click.option("--all-data", is_flag=True, help="Calculate homopause altitudes for entire data set")
 @click.option(
