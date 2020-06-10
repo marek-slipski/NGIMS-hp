@@ -1,6 +1,7 @@
 click
 cmocean
-dask
+dask[complete]
+marstime
 matplotlib
 numpy
 pandas
