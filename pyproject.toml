@@ -1,0 +1,16 @@
+[project]
+name = "ngims-hp"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "coloredlogs>=15.0.1",
+    "pandas>=2.3.0",
+    "pyaml>=25.5.0",
+]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=6.29.5",
+]
