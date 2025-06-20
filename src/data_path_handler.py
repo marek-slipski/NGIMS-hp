@@ -3,7 +3,7 @@ import datetime as dt
 import requests
 from typing import Union, List
 from util.log import logger
-
+import time
 
 def choose_formatter(pds):
     if pds:
@@ -83,8 +83,28 @@ class PDSFileFormatter():
         return all_files
             
     def find_all_files_in_directory(self, url):
-        response = requests.get(url)
-        status = response.status_code
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
+            'Accept': 'application/json',
+        }
+        tries = 0
+        success  = 0
+        while tries<10 and success==0:
+            try:
+                response = requests.get(url,  headers=headers, timeout=180)
+                response.raise_for_status()
+                success = 1
+            except requests.exceptions.Timeout:
+                print("Request timed out looking for files. Will retry...")
+                time.sleep(60)
+                tries += 1
+            except requests.exceptions.RequestException as e:
+                print("Reading error looking for files, will retry...")
+                time.sleep(60)
+                tries += 1
+        if success ==0:
+            print(f"Failed to connect to: {url}")
+            return []
         soup = BeautifulSoup(response.content, 'html.parser')
         file_links = [l for l in [link.get('href') for link in soup.find_all('a', href=True)] for ft in ["csv"] if ft in l]
         return file_links
