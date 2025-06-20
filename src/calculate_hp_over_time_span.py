@@ -56,7 +56,6 @@ def main(start_time, end_time):
             period_start = period_end
             continue
         else:
-
             single_orb_inbound_abund = inbound_data.pivot_table(values=["abundance"], index=["alt", "species"]).unstack()
             single_orb_inbound_abund = single_orb_inbound_abund[
                 ((single_orb_inbound_abund["abundance"]["Ar"])>0)
